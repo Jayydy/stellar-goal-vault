@@ -311,6 +311,11 @@ mod test_admin_auth;
 #[cfg(test)]
 mod test_refund_events;
 
+// Boundary cases on the claim path: one-unit and fee-rounding amounts, a
+// second claim, and token transfers failing after authorization.
+#[cfg(test)]
+mod test_claim_boundaries;
+
 // Repeatable resource benchmark for the refund path against the release WASM.
 // Ignored by default; run via `scripts/bench-refund.sh`.
 #[cfg(test)]

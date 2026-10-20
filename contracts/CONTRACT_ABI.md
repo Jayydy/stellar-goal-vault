@@ -321,6 +321,13 @@ fn claim(env: Env, campaign_id: u64, creator: Address)
 
 **Emits:** `CampaignClaimed` (one per token with a non-zero balance)
 
+**Boundary behavior** (covered by `src/test_claim_boundaries.rs`):
+
+- **All-or-nothing, no partial claim.** One call pays out every token balance of the campaign and sets `claimed`. A second ("remaining") claim always fails with `"campaign already claimed"`, and nothing can be left over: pledges are capped at `target_amount` and rejected after the deadline. A one-unit campaign (target and pledge of 1) claims exactly 1 unit. `pledged_amount` keeps the historical total; per-token balances go to 0.
+- **Integer fee.** Per token, `fee = balance * fee_bps / 10_000`, truncated toward zero, and the creator receives `balance - fee`, so `fee + creator share == balance` exactly. At the default 50 bps, balances below 200 units pay no fee (no `FeeCollected` event); 200 units pay 1. At 10,000 bps the recipient receives the whole balance. Arithmetic is `i128` and the release profile sets `overflow-checks = true`, so an overflow panics and reverts the call instead of wrapping.
+- **Fee above 100%.** `set_fee` accepts any non-negative value. Above 10,000 bps the creator's share is negative, the token rejects the transfer (Stellar asset error #8, negative amount), and every claim reverts with no balance moved. Other campaigns' funds held by the vault are not touched. Claims work again once the admin sets a fee ≤ 10,000.
+- **Transfer failing after authorization.** If a token transfer fails after the creator's signature and every check above have passed (for example, the asset issuer revoked authorization for the creator, the fee recipient, or the vault), the whole call reverts. That includes transfers of other tokens already made in the same call. `claimed` stays `false`, all balances are unchanged, no event is emitted, and the creator can retry once the transfer can succeed.
+
 **Gas estimate:** 20,000 + 15,000 per accepted token (transfer + storage) ≈ base 20,000 + 15,000 per token + 20% headroom: **42,000** (1 token) / **102,000** (5 tokens)
 
 ---
