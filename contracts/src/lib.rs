@@ -311,6 +311,11 @@ mod test_admin_auth;
 #[cfg(test)]
 mod test_refund_events;
 
+// Repeatable resource benchmark for the refund path against the release WASM.
+// Ignored by default; run via `scripts/bench-refund.sh`.
+#[cfg(test)]
+mod bench_refund;
+
 // Governance module for multi-sig campaign approval
 mod governance;
 

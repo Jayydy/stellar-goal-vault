@@ -388,6 +388,8 @@ fn refund_all(env: Env, campaign_id: u64)
 
 **Indexer note:** A successful `refund_all` emits one `("Goal", "Refund")` event per contributor per token, followed by exactly one `("Goal", "RefundAll")` summary emitted after all transfers and storage writes complete. Contributors who already reclaimed their pledge with `refund` get no event and are not counted. Any rejected call emits no event.
 
+**Capacity limit:** the call is all-or-nothing, and each refunded (contributor, token) pair emits about 512 bytes of events. At about 31 single-token contributors (fewer with more tokens) it exceeds the mainnet 16 KiB per-transaction event limit and fails. Larger campaigns must be refunded per contributor with `refund`. Measured in [BENCHMARKS.md](./BENCHMARKS.md#refund-path-benchmark-refund--refund_all).
+
 **Gas estimate:** 15,000 base + 25,000 per contributor ≈ highly variable. For 10 contributors with 1 token each: **290,000** + 20% headroom = **348,000**
 
 ---
